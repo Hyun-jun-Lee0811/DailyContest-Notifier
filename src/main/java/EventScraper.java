@@ -1,4 +1,4 @@
-import java.io.*;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -6,8 +6,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
-
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -45,7 +46,7 @@ public class EventScraper {
       html.append(
           "body{background:#f4f7f9; padding-top:40px; font-family:'Pretendard', sans-serif;}");
       html.append(
-          ".contest-card{background:white; border-radius:12px; border:1px solid #e1e4e8; padding:24px; margin-bottom:20px; transition:0.2s; height: 100%;}");
+          ".contest-card{background:white; border-radius:12px; border:1px solid #e1e4e8; padding:24px; margin-bottom:20px; transition:0.2s; min-height: 280px; display: flex; flex-direction: column; justify-content: space-between;}");
       html.append(
           ".contest-card:hover{transform:translateY(-3px); box-shadow:0 8px 16px rgba(0,0,0,0.08); border-color:#0d6efd;}");
       html.append(
@@ -58,7 +59,6 @@ public class EventScraper {
       html.append("<h1> 공모전 </h1>");
       html.append("<p class='sub-title'>최신 공모전 정보를 한눈에 확인하세요</p>");
 
-      // 🔍 검색창 코드 (오류 수정됨)
       html.append("<div class='search-box'>");
       html.append(
           "<input type='text' id='searchInput' class='form-control form-control-lg shadow-sm' placeholder='키워드로 공모전 찾기...'>");
@@ -80,12 +80,13 @@ public class EventScraper {
         String link = "https://www.wevity.com/" + el.attr("href");
 
         html.append("<div class='col-md-6 col-lg-4 mb-4 contest-item'>");
-        html.append("<div class='contest-card'>");
+        html.append("<div class='contest-card'><div>"); // 내부 정렬용 div 추가
         html.append("<span class='badge-date'>").append(day).append("</span>");
         html.append(
-                "<h5 class='fw-bold mb-3' style='line-height:1.5; height:3rem; overflow:hidden;'>")
+                "<h5 class='fw-bold mb-3' style='line-height:1.5; word-break: keep-all;'>")
             .append(title).append("</h5>");
         html.append("<p class='text-muted small mb-4'> ").append(organ).append("</p>");
+        html.append("</div>"); // 내부 div 닫기
         html.append("<a href='").append(link)
             .append("' target='_blank' class='btn btn-primary w-100 fw-bold'>상세 정보 보기</a>");
         html.append("</div></div>");
