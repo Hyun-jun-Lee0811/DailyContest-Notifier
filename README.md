@@ -24,7 +24,7 @@
 
 ---
 
-## 📂 파일 구조
+## 파일 구조
 
 ```text
 Contest-Hub/
@@ -34,7 +34,7 @@ Contest-Hub/
 ├─ pom.xml                          # Maven 프로젝트 설정 및 의존성 관리
 └─ README.md                        # 프로젝트 설명서
 ```
-⚡ 사용 방법
+사용 방법
 Discord 웹훅 설정
 
 EventScraper.java 파일 내 DISCORD_WEBHOOK_URL 변수에 본인의 디스코드 웹훅 주소를 입력합니다.
