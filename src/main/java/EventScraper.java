@@ -27,7 +27,7 @@ public class EventScraper {
 
       Document doc = Jsoup.connect(WEVITY_URL)
           .userAgent(
-              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)")
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
           .get();
 
       Elements items = doc.select(".list li");
@@ -43,28 +43,28 @@ public class EventScraper {
           "<link href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css' rel='stylesheet'>");
       html.append("<style>");
       html.append(
-          "body{background:#f8f9fa; padding-top:30px; font-family:'Pretendard',sans-serif;}");
+          "body{background:#f8f9fa; padding-top:30px; font-family:'Pretendard', sans-serif;}");
       html.append(
-          ".contest-card{background:white; border-radius:15px; overflow:hidden; margin-bottom:20px; box-shadow:0 4px 6px rgba(0,0,0,0.05); transition:0.3s; height: 100%;}");
+          ".contest-card{background:white; border-radius:15px; overflow:hidden; margin-bottom:20px; box-shadow:0 4px 6px rgba(0,0,0,0.05); transition:0.3s; height: 100%; display: flex; flex-direction: column;}");
       html.append(
           ".contest-card:hover{transform:translateY(-5px); box-shadow:0 8px 15px rgba(0,0,0,0.1);}");
       html.append(
-          ".img-container{width:100%; height:200px; overflow:hidden; background:#e9ecef; border-bottom:1px solid #eee;}");
-      html.append(".img-container img{width:100%; height:100%; object-fit:cover;}");
-      html.append(".card-body{padding:20px;}");
+          ".img-container{width:100%; height:200px; overflow:hidden; background:#dee2e6; display: flex; align-items: center; justify-content: center;}");
+      html.append(
+          ".img-container img{width:100%; height:100%; object-fit: contain; padding: 10px;}");
+      html.append(".card-body{padding:20px; flex-grow: 1;}");
       html.append(
           ".badge-date{background:#0d6efd; color:white; padding:4px 12px; border-radius:20px; font-size:0.8rem; font-weight:bold;}");
-      html.append("h1{font-weight:800; text-align:center; margin-bottom:30px;}");
-      html.append(
-          ".search-box{max-width:500px; margin: 0 auto 40px; shadow: 0 2px 4px rgba(0,0,0,0.05);}");
+      html.append("h1{font-weight:800; text-align:center; margin-bottom:30px; color: #212529;}");
+      html.append(".search-box{max-width:500px; margin: 0 auto 40px;}");
       html.append("</style></head><body><div class='container'>");
 
-      html.append("<h1> 실시간 공모전 </h1>");
-
+      html.append("<h1>공모전</h1>");
       html.append(
-          "<div class='search-box'><input type='text' id='searchInput' class='form-control form-control-lg' placeholder='공모전 제목이나 주최측 검색...'></div>");
+          "<div class='search-box'><input type='text' id='searchInput' class='form-control form-control-lg shadow-sm' placeholder='공모전 제목이나 주최측 검색...'></div>");
       html.append("<div class='row' id='contestList'>");
 
+      int newCount = 0;
       for (int i = 0; i < Math.min(items.size(), 20); i++) {
         Element item = items.get(i);
         Element el = item.selectFirst(".tit a");
@@ -72,18 +72,24 @@ public class EventScraper {
           continue;
         }
 
-        String title = el.text(), organ = item.select(".organ").text(), day = item.select(".day")
-            .text();
+        String title = el.text();
+        String organ = item.select(".organ").text();
+        String day = item.select(".day").text();
         String link = "https://www.wevity.com/" + el.attr("href");
 
-        String imgTag = item.select(".thumb img").attr("src");
-        String imgUrl = imgTag.isEmpty() ? "https://via.placeholder.com/300x200?text=No+Image"
-            : "https://www.wevity.com" + imgTag;
+        Element imgEl = item.selectFirst("img");
+        String imgUrl = "https://via.placeholder.com/300x200?text=No+Image";
+        if (imgEl != null) {
+          String src = imgEl.attr("src");
+          if (!src.isEmpty()) {
+            imgUrl = src.startsWith("http") ? src : "https://www.wevity.com" + src;
+          }
+        }
 
         html.append("<div class='col-md-6 col-lg-4 mb-4 contest-item'>");
         html.append("<div class='contest-card'>");
-        html.append("<div class='img-container'><img src='").append(imgUrl)
-            .append("' alt='공모전 포스터'></div>");
+        html.append("<div class='img-container'><img src='").append(imgUrl).append(
+            "' onerror=\"this.src='https://via.placeholder.com/300x200?text=Poster'\" alt='공모전 포스터'></div>");
         html.append("<div class='card-body'>");
         html.append("<span class='badge-date'>").append(day).append("</span>");
         html.append("<h5 class='mt-3 mb-2 fw-bold text-truncate' title='").append(title)
@@ -92,16 +98,15 @@ public class EventScraper {
         html.append("<a href='").append(link)
             .append("' target='_blank' class='btn btn-outline-primary btn-sm w-100'>상세보기 →</a>");
         html.append("</div></div></div>");
-        int newCount = 0;
+
         if (sent.add(title)) {
           sendDiscordAlert(DISCORD_WEBHOOK_URL,
-              "공모전\n " + title + "\n 주최: " + organ + "\n 마감: " + day + "\n " + link);
+              "공모전\n 제목: " + title + "\n 주최: " + organ + "\n 마감: " + day + "\n 링크: " + link);
           newCount++;
         }
       }
 
       html.append("</div>");
-
       html.append("<script>");
       html.append("document.getElementById('searchInput').addEventListener('keyup', function() {");
       html.append("  let val = this.value.toLowerCase();");
@@ -117,9 +122,9 @@ public class EventScraper {
           .append("</small></footer></div></body></html>");
 
       Files.write(Paths.get(SENT_FILE), new ArrayList<>(sent));
-      Files.write(Paths.get("index.html"), html.toString().getBytes(StandardCharsets.UTF_8));
+      Files.writeString(Paths.get("index.html"), html.toString());
 
-      System.out.println("완료! (20개 출력 / 이미지 및 검색 기능 적용됨)");
+      System.out.println("완료! 새 알림: " + newCount + "건");
     } catch (Exception e) {
       e.printStackTrace();
     }
